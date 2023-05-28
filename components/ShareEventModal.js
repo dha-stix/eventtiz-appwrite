@@ -17,7 +17,7 @@ const ShareEventModal = ({ event, closeModal }) => {
 				<div className='w-max-content flex md:flex-row flex-col items-center space-x-3 p-3'>
 					<div className='w-full border-[1px] md:mb-0 mb-4 p-2 rounded-md'>
 						<p className='text-gray-400 text-center link'>
-							{`https://https://eventtiz-appwrite.vercel.app/register/${query.id}/${event.slug}`}
+							{`https://eventtiz-appwrite.vercel.app/register/${query.id}/${event.slug}`}
 						</p>
 					</div>
 
