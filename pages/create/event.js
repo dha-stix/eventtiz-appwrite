@@ -8,7 +8,7 @@ import DatePicker from "react-datepicker";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
-import { createTicket, checkAuthStatus } from "../../utils/functions";
+import { checkAuthStatus, createEvent } from "../../utils/functions";
 
 const event = () => {
 	const [user, setUser] = useState({});
@@ -36,7 +36,7 @@ const event = () => {
 	const handleSubmit = (e) => {
 		e.preventDefault();
 		setButtonClicked(true);
-		createTicket(
+		createEvent(
 			user.$id,
 			title,
 			date,

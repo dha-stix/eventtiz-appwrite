@@ -5,14 +5,38 @@ import emailjs from "@emailjs/browser";
 
 //👇🏻 generate random strings as ID
 const generateID = () => Math.random().toString(36).substring(2, 24);
-
 //👇🏻 extract file ID from the document
 const extractIdFromUrl = (url) => {
 	const regex = /files\/([^/]+)\//;
 	const match = url.match(regex);
 	return match ? match[1] : null;
 };
-
+//👇🏻 alerts a success message
+const successMessage = (message) => {
+	toast.success(message, {
+		position: "top-right",
+		autoClose: 5000,
+		hideProgressBar: false,
+		closeOnClick: true,
+		pauseOnHover: true,
+		draggable: true,
+		progress: undefined,
+		theme: "light",
+	});
+};
+//👇🏻 alerts an error message
+const errorMessage = (message) => {
+	toast.error(message, {
+		position: "top-right",
+		autoClose: 5000,
+		hideProgressBar: false,
+		closeOnClick: true,
+		pauseOnHover: true,
+		draggable: true,
+		progress: undefined,
+		theme: "light",
+	});
+};
 //👇🏻 convert the date to human-readable form
 export const formatDate = (dateString) => {
 	const options = { year: "numeric", month: "long", day: "numeric" };
@@ -33,7 +57,6 @@ export const formatDate = (dateString) => {
 
 	return formattedDateWithSuffix;
 };
-
 //👇🏻 send email via EmailJS
 const sendEmail = (
 	name,
@@ -71,11 +94,10 @@ const sendEmail = (
 				setSuccess(true);
 			},
 			(error) => {
-				alert(error.text);
+				errorMessage(error.text);
 			}
 		);
 };
-
 //👇🏻 converts JSON string to JavaScript objects
 export const parseJSON = (jsonString) => {
 	try {
@@ -85,7 +107,6 @@ export const parseJSON = (jsonString) => {
 		return null;
 	}
 };
-
 //👇🏻 generate slug
 export const createSlug = (sentence) => {
 	let slug = sentence.toLowerCase().trim();
@@ -93,115 +114,72 @@ export const createSlug = (sentence) => {
 	slug = slug.replace(/^-+|-+$/g, "");
 	return slug;
 };
-
-//👇🏻 alerts a success message
-const successMessage = (message) => {
-	toast.success(message, {
-		position: "top-right",
-		autoClose: 5000,
-		hideProgressBar: false,
-		closeOnClick: true,
-		pauseOnHover: true,
-		draggable: true,
-		progress: undefined,
-		theme: "light",
-	});
-};
-//👇🏻 alerts an error message
-const errorMessage = (message) => {
-	toast.error(message, {
-		position: "top-right",
-		autoClose: 5000,
-		hideProgressBar: false,
-		closeOnClick: true,
-		pauseOnHover: true,
-		draggable: true,
-		progress: undefined,
-		theme: "light",
-	});
-};
 //👇🏻 Appwrite signUp function
-export const signUp = (name, email, password, router) => {
-	const promise = account.create(ID.unique(), email, password, name);
-
-	promise.then(
-		function (response) {
-			successMessage("Account created! 🎉");
-			router.push("/login");
-		},
-		function (error) {
-			errorMessage("Check your network / User already exists ❌");
-			router.push("/login");
-		}
-	);
+export const signUp = async (name, email, password, router) => {
+	try {
+		await account.create(ID.unique(), email, password, name);
+		successMessage("Account created! 🎉");
+		router.push("/login");
+	} catch (err) {
+		errorMessage("Check your network / User already exists ❌");
+		router.push("/login");
+	}
 };
-
 //👇🏻 Appwrite login function
-export const logIn = (email, setEmail, password, setPassword, router) => {
-	const promise = account.createEmailSession(email, password);
-
-	promise.then(
-		function (response) {
-			successMessage(`Welcome back 🎉`);
-			setEmail("");
-			setPassword("");
-			router.push("/dashboard");
-		},
-		function (error) {
-			console.log(error);
-			errorMessage("Invalid credentials ❌");
-		}
-	);
+export const logIn = async (email, setEmail, password, setPassword, router) => {
+	try {
+		await account.createEmailSession(email, password);
+		successMessage(`Welcome back 🎉`);
+		setEmail("");
+		setPassword("");
+		router.push("/dashboard");
+	} catch (err) {
+		console.error(err);
+		errorMessage("Invalid credentials ❌");
+	}
 };
+
 //👇🏻 Appwrite logout function
-export const logOut = (router) => {
-	const promise = account.deleteSession("current");
+export const logOut = async (router) => {
+	try {
+		await account.deleteSession("current");
+		router.push("/");
+		successMessage("See ya later 🎉");
+	} catch (err) {
+		console.error(err);
+		errorMessage("Encountered an error 😪");
+	}
+};
 
-	promise.then(
-		function (response) {
-			router.push("/");
-			successMessage("See ya later 🎉");
-		},
-		function (error) {
-			console.log(error);
-			errorMessage("Encountered an error 😪");
-		}
-	);
-};
 //👇🏻 Appwrite authenticate user
-export const checkAuthStatus = (setUser, setLoading, router) => {
-	const promise = account.get();
-	promise.then(
-		function (response) {
-			console.log("LOG >>>", response);
-			setUser(response);
-			setLoading(false);
-		},
-		function (error) {
-			router.push("/");
-		}
-	);
+export const checkAuthStatus = async (setUser, setLoading, router) => {
+	try {
+		const request = await account.get();
+		setUser(request);
+		setLoading(false);
+	} catch (err) {
+		router.push("/");
+	}
 };
+
 //👇🏻 Appwrite authenticate and get user's tickets
-export const checkAuthStatusDashboard = (
+export const checkAuthStatusDashboard = async (
 	setUser,
 	setLoading,
 	setEvents,
 	router
 ) => {
-	const promise = account.get();
-	promise.then(
-		function (response) {
-			getTickets(response.$id, setEvents, setLoading);
-			setUser(response);
-		},
-		function (error) {
-			router.push("/");
-		}
-	);
+	try {
+		const request = await account.get();
+		getTickets(request.$id, setEvents, setLoading);
+		setUser(request);
+	} catch (err) {
+		router.push("/");
+	}
 };
+
 //👇🏻 create a new ticket
-export const createTicket = (
+export const createEvent = async (
 	id,
 	title,
 	date,
@@ -212,73 +190,67 @@ export const createTicket = (
 	flier,
 	router
 ) => {
-	const createDocument = (flier_url = "https://google.com") => {
-		const eventPromise = db.createDocument(
-			process.env.NEXT_PUBLIC_DB_ID,
-			process.env.NEXT_PUBLIC_EVENTS_COLLECTION_ID,
-			ID.unique(),
-			{
-				user_id: id,
-				title,
-				date,
-				time,
-				venue,
-				description,
-				note,
-				slug: createSlug(title),
-				attendees: [],
-				disableRegistration: false,
-				flier_url,
-			}
-		);
-		eventPromise.then(
-			function (response) {
-				successMessage("Ticket created 🎉");
-				router.push("/dashboard");
-			},
-			function (error) {
-				console.log("DB ERROR >>", error);
-				errorMessage("Encountered an error ❌");
-			}
-		);
+	const createDocument = async (flier_url = "https://google.com") => {
+		try {
+			const response = await db.createDocument(
+				process.env.NEXT_PUBLIC_DB_ID,
+				process.env.NEXT_PUBLIC_EVENTS_COLLECTION_ID,
+				ID.unique(),
+				{
+					user_id: id,
+					title,
+					date,
+					time,
+					venue,
+					description,
+					note,
+					slug: createSlug(title),
+					attendees: [],
+					disableRegistration: false,
+					flier_url,
+				}
+			);
+			successMessage("Ticket created 🎉");
+			router.push("/dashboard");
+		} catch (error) {
+			console.error("DB ERROR >>", error);
+			errorMessage("Encountered an error ❌");
+		}
 	};
 
 	if (flier !== null) {
-		const storagePromise = storage.createFile(
-			process.env.NEXT_PUBLIC_BUCKET_ID,
-			ID.unique(),
-			flier
-		);
-
-		storagePromise.then(
-			function (response) {
-				createDocument(
-					`https://cloud.appwrite.io/v1/storage/buckets/${process.env.NEXT_PUBLIC_BUCKET_ID}/files/${response.$id}/view?project=${process.env.NEXT_PUBLIC_PROJECT_ID}&mode=admin`
-				);
-			},
-			function (error) {
-				console.log("STORAGE ERR >>>", error); // Failure
-			}
-		);
+		try {
+			const response = await storage.createFile(
+				process.env.NEXT_PUBLIC_BUCKET_ID,
+				ID.unique(),
+				flier
+			);
+			const flier_url = `https://cloud.appwrite.io/v1/storage/buckets/${process.env.NEXT_PUBLIC_BUCKET_ID}/files/${response.$id}/view?project=${process.env.NEXT_PUBLIC_PROJECT_ID}&mode=admin`;
+			await createDocument(flier_url);
+		} catch (error) {
+			console.error("STORAGE ERR >>>", error);
+			errorMessage("Encountered an error saving the flier❌");
+		}
 	} else {
-		createDocument();
+		await createDocument();
 	}
 };
+
 //👇🏻 get user's tickets
-const getTickets = (id, setEvents, setLoading) => {
-	const promise = db.listDocuments(
-		process.env.NEXT_PUBLIC_DB_ID,
-		process.env.NEXT_PUBLIC_EVENTS_COLLECTION_ID,
-		[Query.equal("user_id", id)]
-	);
-	promise
-		.then((response) => {
-			setEvents(response.documents);
-			setLoading(false);
-			console.log(response.documents);
-		})
-		.catch((err) => console.error(err));
+const getTickets = async (id, setEvents, setLoading) => {
+	try {
+		const request = await db.listDocuments(
+			process.env.NEXT_PUBLIC_DB_ID,
+			process.env.NEXT_PUBLIC_EVENTS_COLLECTION_ID,
+			[Query.equal("user_id", id)]
+		);
+		setEvents(request.documents);
+		setLoading(false);
+	} catch (err) {
+		console.error(err);
+	}
 };
+
 //👇🏻 delete a ticket
 export const deleteTicket = async (id) => {
 	try {
@@ -304,7 +276,7 @@ export const deleteTicket = async (id) => {
 		}
 		successMessage("Ticket deleted! 🎉");
 	} catch (err) {
-		console.log(err); // Failure
+		console.error(err); // Failure
 		errorMessage("Action declined ❌");
 	}
 };
@@ -361,7 +333,7 @@ export const registerAttendee = async (
 			errorMessage("User already registered ❌");
 		}
 	} catch (err) {
-		console.log(err); // Failure
+		console.error(err); // Failure
 		errorMessage("Encountered an error!");
 	}
 };
@@ -378,7 +350,7 @@ export const disableRegistration = async (documentId) => {
 		);
 		successMessage("New registration disabled! 🎉");
 	} catch (err) {
-		console.log(err); // Failure
+		console.error(err); // Failure
 		errorMessage("Encountered an error 😪");
 	}
 };
