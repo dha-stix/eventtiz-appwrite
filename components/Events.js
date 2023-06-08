@@ -24,7 +24,7 @@ const Events = ({ events }) => {
 						<h2 className='text-xl font-medium mb-6'>{event.title}</h2>
 						<p className='opacity-80'>
 							{event?.attendees?.length > 0
-								? `${event.attendees.length} people registered`
+								? `${event.attendees.length} person(s) registered`
 								: `No attendee yet`}
 						</p>
 						<p className='opacity-50'>Time: {event.time}</p>
